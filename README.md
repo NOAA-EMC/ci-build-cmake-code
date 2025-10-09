@@ -13,8 +13,8 @@ workflows.
 To submit bug reports, feature requests, or other code-related issues including
 usage questions, please create a [GitHub
 issue](https://github.com/NOAA-EMC/ci-build-cmake-code/issues). For general
-NCEPLIBS inquiries, contact [Ed Hartnett](mailto:edward.hartnett@noaa.gov)
-(secondary point of contact [Alex Richert](mailto:alexander.richert@noaa.gov)).
+NCEPLIBS inquiries, contact [Alex Richert](mailto:alexander.richert@noaa.gov)
+(secondary point of contact [Hang Lei](mailto:hang.lei@noaa.gov)).
 
 ### Authors
 
