@@ -54,7 +54,7 @@ runs:
       shell: bash
       run: |
         cd ${{ inputs.root-path }}/src/${{ inputs.package-name }}
-        cmake -B ncepbuild -DALLOW_IN_SOURCE_BUILD=ON -DCMAKE_INSTALL_PREFIX=${{ inputs.root-path }}/${{ inputs.package-name }} ${{ inputs.cmake-args }}
+        cmake -B ncepbuild -DALLOW_IN_SOURCE_BUILD=ON -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=${{ inputs.root-path }}/${{ inputs.package-name }} ${{ inputs.cmake-args }}
         cmake --build ncepbuild --parallel ${{ inputs.nproc }}
         cmake --install ncepbuild
     - name: "Record whether cache was used"
