@@ -59,4 +59,4 @@ runs:
         cmake --install ncepbuild
     - name: "Record whether cache was used"
       shell: bash
-      run: echo "usedcache=${{ steps.cache-step.outputs.cache-hit }}"
+      run: echo "usedcache=${{ steps.cache-step.outputs.cache-hit }}" >> $GITHUB_OUTPUT
