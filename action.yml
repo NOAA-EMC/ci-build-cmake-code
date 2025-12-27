@@ -57,3 +57,6 @@ runs:
         cmake -B ncepbuild -DCMAKE_INSTALL_PREFIX=${{ inputs.root-path }}/${{ inputs.package-name }} ${{ inputs.cmake-args }}
         cmake --build ncepbuild --parallel ${{ inputs.nproc }}
         cmake --install ncepbuild
+    - name: "Record whether cache was used"
+      shell: bash
+      run: echo "usedcache=${{ steps.cache-step.outputs.cache-hit }}"
