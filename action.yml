@@ -37,7 +37,7 @@ inputs:
 outputs:
   cache-hit:
     description: "Cache was hit (boolean)"
-    value: ${{ steps.aggregate-cache-stats.outputs.cachehit }}
+    value: ${{ steps.check-cache-hit.outputs.cachehit }}
 
 runs:
   using: "composite"
@@ -79,6 +79,7 @@ runs:
 
     - name: "Record whether cache was used"
       shell: bash
+      id: check-cache-hit
       run: |
         if [ "${{ steps.cache-step.outputs.cache-hit }}" = "true" ] || [ "${{ steps.cache-restore-step.outputs.cache-hit }}" = "true" ]; then
           echo "cachehit=true" >> $GITHUB_OUTPUT
