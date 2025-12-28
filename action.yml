@@ -73,8 +73,20 @@ runs:
       shell: bash
       run: |
         cd ${{ inputs.root-path }}/src/${{ inputs.package-name }}
-        cmake -B ncepbuild -DALLOW_IN_SOURCE_BUILD=ON -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=${{ inputs.root-path }}/${{ inputs.package-name }} ${{ inputs.cmake-args }}
-        cmake --build ncepbuild --parallel ${{ inputs.nproc }}
+        
+        # Function to prefix output with ::debug:: if debug mode is enabled
+        prefix_if_debug() {
+          if [ "$RUNNER_DEBUG" = "1" ]; then sed 's/^/::debug::/'; else cat; fi
+        }
+        
+        # Set debug flags if GitHub Actions debug mode is enabled
+        if [ "$RUNNER_DEBUG" = "1" ]; then
+          CMAKE_EXTRA="--trace"
+          BUILD_EXTRA="--verbose"
+        fi
+        
+        cmake -B ncepbuild -DALLOW_IN_SOURCE_BUILD=ON -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=${{ inputs.root-path }}/${{ inputs.package-name }} ${{ inputs.cmake-args }} $CMAKE_EXTRA 2>&1 | prefix_if_debug
+        cmake --build ncepbuild --parallel ${{ inputs.nproc }} $BUILD_EXTRA 2>&1 | prefix_if_debug
         cmake --install ncepbuild
 
     - name: "Record whether cache was used"
