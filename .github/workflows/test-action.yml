@@ -23,7 +23,7 @@ jobs:
           git-ref: develop
           repo-cache: true
           cache-immediately: true
-          key-prefix: test-
+          key-prefix: test-${{ github.sha }}-
 
       - name: Verify build output
         run: |
@@ -44,7 +44,7 @@ jobs:
           git-ref: develop
           repo-cache: true
           cache-immediately: true
-          key-prefix: test-
+          key-prefix: test-${{ github.sha }}-
 
       - name: Verify cache was used
         run: |
