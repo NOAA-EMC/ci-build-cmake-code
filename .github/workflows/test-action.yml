@@ -1,0 +1,55 @@
+name: Test Action
+
+on:
+  push:
+    branches: [ develop ]
+  pull_request:
+    branches: [ develop ]
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout this action
+        uses: actions/checkout@v4
+        with:
+          path: action
+
+      - name: First run with cache enabled
+        uses: ./action
+        with:
+          package-name: NCEPLIBS-bacio
+          package-org: NOAA-EMC
+          git-ref: develop
+          repo-cache: true
+          cache-immediately: true
+          key-prefix: test-
+
+      - name: Verify build output
+        run: |
+          if [ -d "${{ github.workspace }}/nceplibs/NCEPLIBS-bacio" ]; then
+            echo "Build directory exists"
+            ls -la "${{ github.workspace }}/nceplibs/NCEPLIBS-bacio"
+          else
+            echo "Build directory not found"
+            exit 1
+          fi
+
+      - name: Second run should use cache
+        uses: ./action
+        id: cached-run
+        with:
+          package-name: NCEPLIBS-bacio
+          package-org: NOAA-EMC
+          git-ref: develop
+          repo-cache: true
+          cache-immediately: true
+          key-prefix: test-
+
+      - name: Verify cache was used
+        run: |
+          echo "Cache hit: ${{ steps.cached-run.outputs.cache-hit }}"
+          if [ "${{ steps.cached-run.outputs.cache-hit }}" != "true" ]; then
+            echo "ERROR: Cache was not used on second run"
+            exit 1
+          fi

@@ -16,6 +16,9 @@ inputs:
   repo-cache:
     description: 'Cache built packages through "actions/cache"'
     default: false
+  cache-immediately:
+    description: 'Save cache immediately (at end of action step rather than end of workflow)'
+    default: false
   root-path:
     default: ${{ github.workspace }}/nceplibs
   key-prefix:
@@ -39,29 +42,53 @@ outputs:
 runs:
   using: "composite"
   steps:
+  
     - name: "Cache setup for '${{ inputs.package-name }}'"
       id: cache-step
       uses: actions/cache@v4
-      if: ${{ inputs.repo-cache == 'true' }}
+      if: ${{ inputs.repo-cache == 'true' && inputs.cache-immediately == 'false' }}
       with:
         path: ${{ inputs.root-path }}/${{ inputs.package-name }}
         key: ${{ inputs.key-prefix }}${{ inputs.package-name }}-${{ inputs.git-ref }}-${{ inputs.cmake-args }}${{ inputs.key-suffix }}
+
+    - name: "Restore cache for '${{ inputs.package-name }}'"
+      id: cache-restore-step
+      uses: actions/cache/restore@v4
+      if: ${{ inputs.repo-cache == 'true' && inputs.cache-immediately == 'true' }}
+      with:
+        path: ${{ inputs.root-path }}/${{ inputs.package-name }}
+        key: ${{ inputs.key-prefix }}${{ inputs.package-name }}-${{ inputs.git-ref }}-${{ inputs.cmake-args }}${{ inputs.key-suffix }}
+
     - name: "Check out '${{ inputs.package-name }}'"
       uses: actions/checkout@v4
-      if: ${{ steps.cache-step.outputs.cache-hit != 'true' }}
+      if: ${{ steps.cache-step.outputs.cache-hit != 'true' && steps.cache-restore-step.outputs.cache-hit != 'true' }}
       with:
         repository: ${{ inputs.package-org }}/${{ inputs.package-name }}
         path: ${{ inputs.root-path }}/src/${{ inputs.package-name }}
         ref: ${{ inputs.git-ref }}
         submodules: ${{ inputs.submodules }}
+
     - name: "Build '${{ inputs.package-name }}'"
-      if: ${{ steps.cache-step.outputs.cache-hit != 'true' }}
+      if: ${{ steps.cache-step.outputs.cache-hit != 'true' && steps.cache-restore-step.outputs.cache-hit != 'true' }}
       shell: bash
       run: |
         cd ${{ inputs.root-path }}/src/${{ inputs.package-name }}
         cmake -B ncepbuild -DALLOW_IN_SOURCE_BUILD=ON -DBUILD_TESTING=OFF -DCMAKE_INSTALL_PREFIX=${{ inputs.root-path }}/${{ inputs.package-name }} ${{ inputs.cmake-args }}
         cmake --build ncepbuild --parallel ${{ inputs.nproc }}
         cmake --install ncepbuild
+
     - name: "Record whether cache was used"
       shell: bash
-      run: echo "cachehit=${{ steps.cache-step.outputs.cache-hit }}" >> $GITHUB_OUTPUT
+      run: |
+        if [ "${{ steps.cache-step.outputs.cache-hit }}" = "true" ] || [ "${{ steps.cache-restore-step.outputs.cache-hit }}" = "true" ]; then
+          echo "cachehit=true" >> $GITHUB_OUTPUT
+        else
+          echo "cachehit=false" >> $GITHUB_OUTPUT
+        fi
+
+    - name: "Save cache for '${{ inputs.package-name }}'"
+      uses: actions/cache/save@v4
+      if: ${{ inputs.repo-cache == 'true' && inputs.cache-immediately == 'true' && steps.cache-restore-step.outputs.cache-hit != 'true' }}
+      with:
+        path: ${{ inputs.root-path }}/${{ inputs.package-name }}
+        key: ${{ inputs.key-prefix }}${{ inputs.package-name }}-${{ inputs.git-ref }}-${{ inputs.cmake-args }}${{ inputs.key-suffix }}
